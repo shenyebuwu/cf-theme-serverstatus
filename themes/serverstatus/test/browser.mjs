@@ -34,7 +34,7 @@ function history() {
   return Array.from({ length: 40 }, (_, i) => ({ ...nodes()[0], timestamp: now - (40 - i) * 15000, cpu: 20 + Math.sin(i / 3) * 15, ram_used: 3200 + Math.cos(i / 5) * 300, net_in_speed: 2400000 + Math.sin(i / 4) * 1500000, ping_ct: 25 + i % 6, ping_cu: 36 + i % 7, ping_cm: null }))
 }
 const switches = { show_price: true, show_expire: true, show_tf: true, show_three_net_details: true }
-async function scenario({ isPublic = true, turnstile = false, jwt = false, timeout = 0, meta = '', deepLink = false } = {}) {
+async function scenario({ isPublic = true, turnstile = false, jwt = false, timeout = 0, meta = '', deepLink = false, classic = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' })
   const page = await context.newPage()
   const calls = [], subscriptions = [], sockets = [], errors = []
@@ -53,7 +53,7 @@ async function scenario({ isPublic = true, turnstile = false, jwt = false, timeo
     if (url.pathname === '/api/config') data = { is_public: isPublic, authorization: jwt, turnstile_enabled: turnstile, turnstile_site_key: 'test-key', preferred_theme: 'light', default_language: 'zh', site_title: 'ServerStatus Monitor', custom_ct_name: 'China Telecom', version: '2.8.7', frontend_ws_timeout_minutes: timeout }
     else if (!isPublic && headers.authorization !== 'Bearer test-jwt') { status = 401; data = { error: 'Unauthorized' } }
     else if (turnstile && !headers['x-turnstile-token'] && !headers['x-turnstile-verified']) { status = 403; data = { error: 'Forbidden' } }
-    else if (url.pathname === '/api/servers') data = { servers: nodes(), stats: { total: 6, online: 5, offline: 1 }, sysConfig: switches, ...(turnstile ? { turnstile_verified: 'test-credential' } : {}) }
+    else if (url.pathname === '/api/servers') data = { servers: nodes().map((node, i) => classic ? { ...node, name: ['DMIT', 'Taipei101', 'Aliyun', 'PVE', 'Phicomm', 'Taxi'][i], server_group: '' } : node), stats: { total: 6, online: 5, offline: 1 }, sysConfig: switches, ...(turnstile ? { turnstile_verified: 'test-credential' } : {}) }
     else if (url.pathname === '/api/server') data = { ...nodes().find(node => node.id === url.searchParams.get('id')), sysConfig: {}, ...(turnstile ? { turnstile_verified: 'test-credential' } : {}) }
     else if (url.pathname === '/api/history/all') data = history()
     else throw new Error(`Unexpected endpoint: ${url.pathname}`)
@@ -98,9 +98,13 @@ try {
   await a.page.waitForTimeout(250); assert.equal(a.count('/api/history/all'), 2)
   await a.page.locator('.back-link').click()
   await a.page.locator('.server-row').first().waitFor(); assert.equal(a.count('/api/servers'), 1)
+  // The classic table keeps its search control out of the summary row.
+  await a.page.locator('.table-toolbar').hover()
+  await a.page.getByRole('button', { name: '搜索服务器' }).click()
   await a.page.getByPlaceholder('搜索服务器').fill('Tokyo'); assert.equal(await a.page.locator('.server-row').count(), 1)
   await a.page.getByPlaceholder('搜索服务器').fill('')
-  await a.page.locator('.toolbox button').click()
+  await a.page.getByRole('button', { name: '搜索服务器' }).click()
+  await a.page.getByRole('button', { name: '切换深浅色' }).click()
   await a.page.screenshot({ path: path.join(artifacts, 'desktop-dark.png'), fullPage: true })
   await a.page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await a.page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
@@ -116,6 +120,30 @@ try {
   await a.page.waitForTimeout(500); assert.equal(a.count('/api/servers'), 2); assert.equal(a.count('/api/config'), 1)
   assert.deepEqual(a.errors, []); await a.context.close()
   console.log('PASS: desktop/mobile layout, charts, route lifecycle, per-server WS, no polling, visibility refresh')
+
+  const classic = await scenario({ classic: true })
+  await classic.page.locator('.server-row').first().waitFor()
+  await classic.page.setViewportSize({ width: 1280, height: 720 })
+  await classic.page.waitForTimeout(300)
+  const appearance = await classic.page.evaluate(() => ({
+    font: getComputedStyle(document.querySelector('.server-table')).fontSize,
+    align: getComputedStyle(document.querySelector('.col-name')).textAlign,
+    os: getComputedStyle(document.querySelector('.col-os')).display,
+    expiry: getComputedStyle(document.querySelector('.col-expiry')).display,
+    panel: document.querySelector('.server-panel').getBoundingClientRect().height,
+    footer: !!document.querySelector('.table-footer'),
+    summary: document.querySelector('.summary').textContent,
+    overflow: document.documentElement.scrollWidth > innerWidth
+  }))
+  assert.equal(appearance.font, '14px'); assert.equal(appearance.align, 'center')
+  assert.notEqual(appearance.os, 'none'); assert.notEqual(appearance.expiry, 'none')
+  assert.equal(appearance.footer, false); assert.equal(appearance.overflow, false)
+  assert(appearance.panel < 310); assert.match(appearance.summary, /总流量/)
+  await classic.page.screenshot({ path: path.join(artifacts, 'classic-1280-light.png'), fullPage: true })
+  await classic.page.getByRole('button', { name: '切换深浅色' }).click()
+  await classic.page.screenshot({ path: path.join(artifacts, 'classic-1280-dark.png'), fullPage: true })
+  assert.deepEqual(classic.errors, []); await classic.context.close()
+  console.log('PASS: classic 1280px layout, centered names, complete columns, compact panel and summary')
 
   for (const isPublic of [true, false]) for (const turnstile of [true, false]) {
     const s = await scenario({ isPublic, turnstile, jwt: !isPublic })

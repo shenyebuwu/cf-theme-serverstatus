@@ -4,7 +4,7 @@ const words = {
   zh: {
     home: '首页', monitor: '监控', admin: '后台', servers: '服务器', all: '全部', search: '搜索服务器',
     status: '状态', name: '名称', region: '位置', os: '系统', uptime: '在线', expiry: '到期', load: '负载',
-    speed: '网速 ↓|↑', cpu: 'CPU', ram: '内存', disk: '硬盘', traffic: '月流量', online: '在线', offline: '离线',
+    speed: '网速 ↓|↑', cpu: 'CPU', ram: '内存', disk: '硬盘', traffic: '流量', online: '在线', offline: '离线',
     total: '总数', totalTraffic: '总流量', empty: '没有匹配的服务器', loading: '加载中…', live: '实时连接',
     reconnecting: '重新连接中', stopped: '连接中断', hidden: '已暂停', idle: '等待连接', invalid: '推送格式错误',
     paused: '实时连接已暂停', timeout: '已达到后台设置的连接时限。是否继续接收实时数据？', continue: '继续连接',

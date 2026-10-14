@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { Client, LiveConnection, apiBases } from '../src/client.js'
-import { batchPatches, gpu, mergeServer, online, probeValue, quota, traffic } from '../src/metrics.js'
+import { batchPatches, compact, distro, gpu, mergeServer, online, probeValue, quota, tableUptime, traffic } from '../src/metrics.js'
 
 globalThis.location = { origin: 'https://theme.example' }
 const storage = () => {
@@ -73,6 +73,16 @@ test('CFSM units, probe tri-state and GPU JSON are preserved', () => {
   assert.equal(traffic({ net_rx_monthly: 7, net_tx_monthly: 5, traffic_calc_type: 'ul' }), 5)
   assert.equal(online({ last_updated: Date.now() - 300001 }), false)
   assert.deepEqual(gpu('{"id":0}'), []); assert.deepEqual(gpu('[{"id":"0","info":0}]'), [{ id: '0', info: 0 }])
+})
+test('classic table formatting keeps units compact and OS versions visible', () => {
+  assert.equal(compact(1024 * 5.27), '5.27K')
+  assert.equal(compact(1024 ** 4 * 1.53), '1.53T')
+  assert.equal(compact(0), '0B')
+  assert.equal(distro('Debian GNU/Linux 13 (trixie)'), 'Debian 13')
+  const now = Date.now()
+  assert.equal(tableUptime({ boot_time: now - 76 * 86400000 }, now, '天'), '76 天')
+  assert.equal(tableUptime({ boot_time: now - 3594000 }, now, '天'), '0:59:54')
+  assert.equal(tableUptime({}, now, '天'), '—')
 })
 
 function harness() {

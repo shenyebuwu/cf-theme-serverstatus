@@ -18,6 +18,26 @@ export const bytes = (value) => {
   const i = n ? Math.min(4, Math.max(0, Math.floor(Math.log(n) / Math.log(1024)))) : 0
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${['B', 'KB', 'MB', 'GB', 'TB'][i]}`
 }
+export const compact = (value) => {
+  const n = number(value)
+  if (n < 1) return '0B'
+  const i = Math.min(4, Math.max(0, Math.floor(Math.log(n) / Math.log(1024))))
+  const v = n / 1024 ** i
+  return `${Number(v.toFixed(i === 0 || v >= 100 ? 0 : v >= 10 ? 1 : 2))}${['B', 'K', 'M', 'G', 'T'][i]}`
+}
+export const distro = (value) => {
+  const os = String(value || '').trim()
+  if (!os) return '—'
+  const name = os.split(/\s+/)[0], version = os.match(/\d+(?:\.\d+)?/)?.[0]
+  return version ? `${name} ${version}` : name
+}
+export const tableUptime = (server, now, dayLabel) => {
+  if (!timestamp(server.boot_time)) return '—'
+  const seconds = Math.max(0, Math.floor((now - timestamp(server.boot_time)) / 1000))
+  if (seconds >= 86400) return `${Math.floor(seconds / 86400)} ${dayLabel}`
+  const pad = n => String(n).padStart(2, '0')
+  return `${Math.floor(seconds / 3600)}:${pad(Math.floor(seconds % 3600 / 60))}:${pad(seconds % 60)}`
+}
 export const duration = (seconds) => {
   const n = number(seconds)
   return n >= 86400 ? `${Math.floor(n / 86400)}d` : n >= 3600 ? `${Math.floor(n / 3600)}h` : `${Math.floor(n / 60)}m`

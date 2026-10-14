@@ -7,6 +7,6 @@ const tone = computed(() => safe.value >= 90 ? 'danger' : safe.value >= 80 ? 'wa
 <template>
   <div class="progress" :title="label || (value == null ? '—' : `${Number(value).toFixed(1)}%`)">
     <div class="progress-fill" :class="tone" :style="{ width: `${safe}%` }"></div>
-    <span>{{ label || (value == null ? '—' : `${Number(value).toFixed(1)}%`) }}</span>
+    <span>{{ label || (value == null ? '—' : `${Math.max(0, Number(value) || 0).toFixed(1)}%`) }}</span>
   </div>
 </template>
