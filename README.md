@@ -1,3 +1,16 @@
+# cf-theme-serverstatus
+
+为 CF-Server-Monitor 适配的 ServerStatus 主题工程。
+
+- 主题源码、构建和部署说明：[themes/serverstatus/README.md](themes/serverstatus/README.md)
+- 目标仓库：`shenyebuwu/cf-theme-serverstatus`
+- 主题入口：`themes/serverstatus/`；在该目录执行 `pnpm install --frozen-lockfile`、`pnpm test`、`pnpm build`。
+- 自定义主题地址：`https://github.com/shenyebuwu/cf-theme-serverstatus/tree/dist`（仓库发布、Actions 构建完成后可用）。
+
+本工程保留 CF-Server-Monitor 上游代码作为开发基线与公共工具依赖。以下为上游项目说明，不是主题安装步骤。
+
+---
+
 <div align="center">
 
 # CF-Server-Monitor
