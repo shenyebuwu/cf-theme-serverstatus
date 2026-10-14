@@ -6,7 +6,7 @@ import { createServer } from 'vite'
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const server = await createServer({ root, configFile: path.join(root, 'vite.config.js'), server: { port: 5174, strictPort: true } })
+const server = await createServer({ root, configFile: path.join(root, 'vite.config.js'), server: { host: '127.0.0.1', port: 5174, strictPort: true } })
 await server.listen()
 const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}) })
 const origin = 'http://127.0.0.1:5174'
